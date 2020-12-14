@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <iomanip>
 
 #define MAXVALUE 1000000000
 
@@ -99,12 +100,47 @@ csv getNormalizedDateset(csv dataset, minMaxStruct mmstruct)
     return csvfile;
 }
 
+vector<bool> isCorrectPrediction(csv normalizedDataset, csv weightedDataset)
+{
+    vector<bool> rowState;
+    for (size_t i = 0; i < normalizedDataset.numericMatrix.size(); i++)
+    {
+        vector<double> AllWeightRow;
+        for (size_t j = 0; j < weightedDataset.numericMatrix.size(); j++)
+        {
+            // calcute Dot product
+            double rowSum = 0;
+            for (size_t k = 0; k < normalizedDataset.numericMatrix[0].size()-1; k++)
+            {
+                rowSum += normalizedDataset.numericMatrix[i][k] * weightedDataset.numericMatrix[j][k];
+            }
+            rowSum += weightedDataset.numericMatrix[j][weightedDataset.numericMatrix[0].size()-1]; // add bias
 
+            AllWeightRow.push_back(rowSum);
+        }
+
+        double maxWeight = *max_element(AllWeightRow.begin(), AllWeightRow.end());
+        ptrdiff_t pos = distance(AllWeightRow.begin(), find(AllWeightRow.begin(), AllWeightRow.end(), maxWeight));
+
+        if ( pos == normalizedDataset.numericMatrix[i][normalizedDataset.numericMatrix[0].size()-1] )
+        {
+            rowState.push_back(true);
+        }
+        else
+        {
+            rowState.push_back(false);
+        }
+    }
+    return rowState;
+}
 
 int main(int argc, char const *argv[])
 {
     csv Dataset;
     Dataset = ReadCSV(argv[1]);
+
+    csv weightDataset;
+    weightDataset = ReadCSV(argv[2]);
 
     minMaxStruct minmax;
     minmax = getMinMaxColumn(Dataset);
@@ -112,37 +148,47 @@ int main(int argc, char const *argv[])
     csv nomalizedDataset;
     nomalizedDataset = getNormalizedDateset(Dataset, minmax);
 
-    for (size_t i = 0; i < Dataset.headerFile.size(); i++)
-    {
-        cout << Dataset.headerFile[i] << " ";
-    }
-    cout << endl;
-    for (size_t i = 0; i < 5; i++)
-    {
-        for (size_t j = 0; j < Dataset.numericMatrix[0].size(); j++)
-        {
-            cout << Dataset.numericMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
+    vector<bool> rowCorrectness;
+    rowCorrectness = isCorrectPrediction(nomalizedDataset, weightDataset);
 
-    for (size_t i = 0; i < Dataset.headerFile.size()-1; i++)
-    {
-        cout << "column : " << Dataset.headerFile[i] << "\t # max :" <<minmax[Dataset.headerFile[i]][0]
-        << "\t # min :" << minmax[Dataset.headerFile[i]][1] << endl;
-    }
+    // for (size_t i = 0; i < Dataset.headerFile.size(); i++)
+    // {
+    //     cout << Dataset.headerFile[i] << " ";
+    // }
+    //cout << endl;
+    // for (size_t i = 0; i < 5; i++)
+    // {
+    //     for (size_t j = 0; j < Dataset.numericMatrix[0].size(); j++)
+    //     {
+    //         cout << Dataset.numericMatrix[i][j] << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << endl;
+
+    // for (size_t i = 0; i < Dataset.headerFile.size()-1; i++)
+    // {
+    //     cout << "column : " << Dataset.headerFile[i] << "\t # max :" <<minmax[Dataset.headerFile[i]][0]
+    //     << "\t # min :" << minmax[Dataset.headerFile[i]][1] << endl;
+    // }
     
-    cout << Dataset.headerFile.size() << " " << Dataset.numericMatrix.size() << endl;
+    //cout << Dataset.headerFile.size() << " " << Dataset.numericMatrix.size() << endl;
 
-    cout << endl;
-    for (size_t i = 0; i < 5; i++)
-    {
-        for (size_t j = 0; j < nomalizedDataset.numericMatrix[0].size(); j++)
-        {
-            cout << nomalizedDataset.numericMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
+    //cout << endl;
+    // for (size_t i = 0; i < 5; i++)
+    // {
+    //     for (size_t j = 0; j < nomalizedDataset.numericMatrix[0].size(); j++)
+    //     {
+    //         cout << nomalizedDataset.numericMatrix[i][j] << " ";
+    //     }
+    //     cout << endl;
+    // }
+
+    double numofcorrect = count(rowCorrectness.begin(), rowCorrectness.end(), true);
+    double answer = numofcorrect / rowCorrectness.size();
+    //cout << numofcorrect << endl;
+    //cout << rowCorrectness.size() << endl;
+    cout << fixed << setprecision(2) << answer*100 << endl;
+
     return 0;
 }
