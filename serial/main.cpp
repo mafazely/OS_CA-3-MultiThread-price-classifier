@@ -137,10 +137,12 @@ vector<bool> isCorrectPrediction(csv normalizedDataset, csv weightedDataset)
 int main(int argc, char const *argv[])
 {
     csv Dataset;
-    Dataset = ReadCSV(argv[1]);
+    string trainFilePath = string(argv[1]) + "train.csv";
+    Dataset = ReadCSV(trainFilePath);
 
     csv weightDataset;
-    weightDataset = ReadCSV(argv[2]);
+    string weightFilePath = string(argv[1]) + "weights.csv";
+    weightDataset = ReadCSV(weightFilePath);
 
     minMaxStruct minmax;
     minmax = getMinMaxColumn(Dataset);
@@ -151,44 +153,10 @@ int main(int argc, char const *argv[])
     vector<bool> rowCorrectness;
     rowCorrectness = isCorrectPrediction(nomalizedDataset, weightDataset);
 
-    // for (size_t i = 0; i < Dataset.headerFile.size(); i++)
-    // {
-    //     cout << Dataset.headerFile[i] << " ";
-    // }
-    //cout << endl;
-    // for (size_t i = 0; i < 5; i++)
-    // {
-    //     for (size_t j = 0; j < Dataset.numericMatrix[0].size(); j++)
-    //     {
-    //         cout << Dataset.numericMatrix[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-    // cout << endl;
-
-    // for (size_t i = 0; i < Dataset.headerFile.size()-1; i++)
-    // {
-    //     cout << "column : " << Dataset.headerFile[i] << "\t # max :" <<minmax[Dataset.headerFile[i]][0]
-    //     << "\t # min :" << minmax[Dataset.headerFile[i]][1] << endl;
-    // }
-    
-    //cout << Dataset.headerFile.size() << " " << Dataset.numericMatrix.size() << endl;
-
-    //cout << endl;
-    // for (size_t i = 0; i < 5; i++)
-    // {
-    //     for (size_t j = 0; j < nomalizedDataset.numericMatrix[0].size(); j++)
-    //     {
-    //         cout << nomalizedDataset.numericMatrix[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-
     double numofcorrect = count(rowCorrectness.begin(), rowCorrectness.end(), true);
     double answer = numofcorrect / rowCorrectness.size();
-    //cout << numofcorrect << endl;
-    //cout << rowCorrectness.size() << endl;
-    cout << fixed << setprecision(2) << answer*100 << endl;
+
+    cout << fixed << setprecision(2) << answer*100 << "%" << endl;
 
     return 0;
 }
