@@ -1,5 +1,8 @@
 #include <bits/stdc++.h>
 
+#define MAXVALUE 1000000000
+
+
 using namespace std;
 
 struct csvFile
@@ -8,6 +11,7 @@ struct csvFile
     vector<string> headerFile;
 };
 typedef struct csvFile csv;
+typedef map<string, vector<double>> minMaxStruct;
 
 csv ReadCSV(string file_path)
 {
@@ -47,14 +51,66 @@ csv ReadCSV(string file_path)
     return csvfile;
 }
 
-map<string, double> getMinMaxColumn(csv dataset)
+minMaxStruct getMinMaxColumn(csv dataset)
 {
+    minMaxStruct minMaxValue;
+    for (size_t i = 0; i < dataset.numericMatrix[0].size()-1; i++)
+    {
+        vector<double> temp;
+        double maxVal = 0;
+        double minVal = MAXVALUE;
+        string headerName = dataset.headerFile[i];
+
+        for (size_t j = 0; j < dataset.numericMatrix.size(); j++)
+        {
+            if (dataset.numericMatrix[j][i] < minVal)
+                minVal = dataset.numericMatrix[j][i];
+
+            if (dataset.numericMatrix[j][i] > maxVal)
+                maxVal = dataset.numericMatrix[j][i];
+        }
+        temp.push_back(maxVal);
+        temp.push_back(minVal);
+        minMaxValue.insert({headerName, temp}); // .f.g { headerName, {maxValue, minValue} }
+    }
+    return minMaxValue;
 }
+
+csv getNormalizedDateset(csv dataset, minMaxStruct mmstruct)
+{
+    csv csvfile;
+    csvfile.numericMatrix = dataset.numericMatrix;
+    //vector<vector<double>> elements;
+    dataset.headerFile.pop_back(); // for price column
+    csvfile.headerFile = dataset.headerFile;
+    for (size_t i = 0; i < dataset.numericMatrix[0].size() - 1; i++)
+    {
+        double maxVal = mmstruct[dataset.headerFile[i]][0];
+        double minVal = mmstruct[dataset.headerFile[i]][1];
+        double diff = maxVal - minVal;
+        vector<double> temp;
+        for (size_t j = 0; j < dataset.numericMatrix.size(); j++)
+        {
+            //temp.push_back((dataset.numericMatrix[j][i] - minVal) / diff);
+            csvfile.numericMatrix[j][i] = (dataset.numericMatrix[j][i] - minVal) / diff;
+        }
+        //csvfile.numericMatrix.push_back(temp);
+    }
+    return csvfile;
+}
+
+
 
 int main(int argc, char const *argv[])
 {
     csv Dataset;
     Dataset = ReadCSV(argv[1]);
+
+    minMaxStruct minmax;
+    minmax = getMinMaxColumn(Dataset);
+
+    csv nomalizedDataset;
+    nomalizedDataset = getNormalizedDateset(Dataset, minmax);
 
     for (size_t i = 0; i < Dataset.headerFile.size(); i++)
     {
@@ -69,7 +125,24 @@ int main(int argc, char const *argv[])
         }
         cout << endl;
     }
+    cout << endl;
 
+    for (size_t i = 0; i < Dataset.headerFile.size()-1; i++)
+    {
+        cout << "column : " << Dataset.headerFile[i] << "\t # max :" <<minmax[Dataset.headerFile[i]][0]
+        << "\t # min :" << minmax[Dataset.headerFile[i]][1] << endl;
+    }
+    
     cout << Dataset.headerFile.size() << " " << Dataset.numericMatrix.size() << endl;
+
+    cout << endl;
+    for (size_t i = 0; i < 5; i++)
+    {
+        for (size_t j = 0; j < nomalizedDataset.numericMatrix[0].size(); j++)
+        {
+            cout << nomalizedDataset.numericMatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
     return 0;
 }
