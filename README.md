@@ -2,7 +2,7 @@
 An OS course project to predict price of phones by train data and weight Matrix
 
 
-## this project had two implementation:
+## this project has two implementation:
 ### serial
 ### parallel
 
@@ -25,7 +25,7 @@ And for parallel part you first copy `breaker.sh` scripts to your dataset direct
 that this number must be equal to thread number that defined in main.cpp
 Default in this project like this :
 ```
-‫‪./breaker.sh‬‬‬‫‪ 6
+./breaker.sh 6
 ```
 Then in `parallel` directory just run `make` command to make project by g++.
 ```
