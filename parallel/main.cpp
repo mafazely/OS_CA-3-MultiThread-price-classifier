@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <limits.h>
 
-#define NUMBER_OF_THREADS 4
+#define NUMBER_OF_THREADS 6
 #define MAXVALUE 1000000000
 
 using namespace std;
@@ -174,4 +174,62 @@ void* calculator(void* args)
     data->total = rowCorrectness.size();
 
     pthread_exit(NULL);
-}   
+}
+
+int main(int argc, char const *argv[])
+{
+    pthread_t threads[NUMBER_OF_THREADS];
+    int return_code;
+
+    double totalcorrect;
+    double totalentries;
+
+
+    // initializing
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        thread_data_array[tid].datasetFilepath = string(argv[1]) + "train_" + to_string((int)tid) + ".csv";
+        thread_data_array[tid].weightedFilepath = string(argv[1]) + "weights.csv";
+        thread_data_array[tid].numOfCorrect = 0;
+        thread_data_array[tid].total = 0;
+    }
+    
+    // create threads
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        return_code = pthread_create(&threads[tid], NULL, calculator, (void *)&thread_data_array[tid]);
+
+        if (return_code)
+        {
+            printf("ERROR; return code from pthread_create() is %d\n",
+                   return_code);
+            exit(-1);
+        }
+    }
+
+    // wait for threads to done their jobs
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        return_code = pthread_join(threads[tid], NULL);
+        if (return_code)
+        {
+            printf("ERROR; return code from pthread_join() is %d\n",
+                   return_code);
+            exit(-1);
+        }
+    }
+
+
+    // get result value from each thread and calculate final result
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        totalcorrect += thread_data_array[tid].numOfCorrect;
+        totalentries += thread_data_array[tid].total;
+    }
+
+    double answer = totalcorrect / totalentries;
+
+    cout << fixed << setprecision(2) << answer * 100 << "%" << endl;
+
+    pthread_exit(NULL);
+}
