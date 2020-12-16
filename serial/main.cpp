@@ -1,8 +1,7 @@
 #include <bits/stdc++.h>
 #include <iomanip>
 
-#define MAXVALUE 1000000000
-
+#define MAXVALUE 1e9
 
 using namespace std;
 
