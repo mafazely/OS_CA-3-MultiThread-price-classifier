@@ -19,11 +19,15 @@ typedef map<string, vector<double>> minMaxStruct;
 
 struct threadData
 {
-    csv dataset;
+    //csv dataset;
+    string datasetFilepath;
+    string weightedFilepath;
     double numOfCorrect;
-    double total = dataset.numericMatrix.size();
+    double total;
 };
 typedef struct threadData thData;
+
+thData thread_data_array[NUMBER_OF_THREADS];
 
 csv ReadCSV(string file_path)
 {
@@ -145,3 +149,29 @@ vector<bool> isCorrectPrediction(csv normalizedDataset, csv weightedDataset)
     return rowState;
 }
 
+void* calculator(void* args)
+{
+    thData* data = (thData*) args;
+
+    csv Dataset;
+    Dataset = ReadCSV(data->datasetFilepath);
+
+    csv weightDataset;
+    weightDataset = ReadCSV(data->weightedFilepath);
+
+    minMaxStruct minmax;
+    minmax = getMinMaxColumn(Dataset);
+
+    csv nomalizedDataset;
+    nomalizedDataset = getNormalizedDateset(Dataset, minmax);
+
+    vector<bool> rowCorrectness;
+    rowCorrectness = isCorrectPrediction(nomalizedDataset, weightDataset);
+
+    double numofcorrect = count(rowCorrectness.begin(), rowCorrectness.end(), true);
+    
+    data->numOfCorrect = numofcorrect;
+    data->total = rowCorrectness.size();
+
+    pthread_exit(NULL);
+}   
