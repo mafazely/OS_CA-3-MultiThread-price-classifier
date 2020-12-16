@@ -2,10 +2,9 @@
 #include <bits/stdc++.h>
 #include <iomanip>
 #include <pthread.h>
-#include <limits.h>
 
 #define NUMBER_OF_THREADS 6
-#define MAXVALUE 1000000000
+#define MAXVALUE 1e9
 
 using namespace std;
 
@@ -19,7 +18,8 @@ typedef map<string, vector<double>> minMaxStruct;
 
 struct threadData
 {
-    //csv dataset;
+    csv dataset;
+    minMaxStruct mms;
     string datasetFilepath;
     string weightedFilepath;
     double numOfCorrect;
@@ -149,18 +149,29 @@ vector<bool> isCorrectPrediction(csv normalizedDataset, csv weightedDataset)
     return rowState;
 }
 
+void* findTotalMinMax(void* args)
+{
+    thData *data = (thData *)args;
+
+    data->dataset = ReadCSV(data->datasetFilepath);
+
+    data->mms = getMinMaxColumn(data->dataset);
+
+    pthread_exit(NULL);
+}
+
 void* calculator(void* args)
 {
     thData* data = (thData*) args;
 
     csv Dataset;
-    Dataset = ReadCSV(data->datasetFilepath);
+    Dataset = data->dataset;
 
     csv weightDataset;
     weightDataset = ReadCSV(data->weightedFilepath);
 
     minMaxStruct minmax;
-    minmax = getMinMaxColumn(Dataset);
+    minmax = data->mms;
 
     csv nomalizedDataset;
     nomalizedDataset = getNormalizedDateset(Dataset, minmax);
@@ -179,11 +190,11 @@ void* calculator(void* args)
 int main(int argc, char const *argv[])
 {
     pthread_t threads[NUMBER_OF_THREADS];
-    int return_code;
+    pthread_t threads2[NUMBER_OF_THREADS];
+    int return_code, return_code2;
 
-    double totalcorrect;
-    double totalentries;
-
+    double totalcorrect = 0;
+    double totalentries = 0;
 
     // initializing
     for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
@@ -197,28 +208,73 @@ int main(int argc, char const *argv[])
     // create threads
     for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
     {
-        return_code = pthread_create(&threads[tid], NULL, calculator, (void *)&thread_data_array[tid]);
+        return_code = pthread_create(&threads[tid], NULL, findTotalMinMax, (void *)&thread_data_array[tid]);
 
         if (return_code)
         {
-            printf("ERROR; return code from pthread_create() is %d\n",
-                   return_code);
+            printf("ERROR; return code from pthread_create() is %d\n", return_code);
             exit(-1);
         }
     }
 
-    // wait for threads to done their jobs
+    // wait for threads to done their jobs[get MinMaxstruct]
     for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
     {
         return_code = pthread_join(threads[tid], NULL);
         if (return_code)
         {
-            printf("ERROR; return code from pthread_join() is %d\n",
-                   return_code);
+            printf("ERROR; return code from pthread_join() is %d\n", return_code);
             exit(-1);
         }
     }
 
+    vector<string> header;
+    header = thread_data_array[0].dataset.headerFile;
+    minMaxStruct minmaxfinal;
+    // convert all mms to final minMax
+    for (long i = 0; i < header.size()-1; i++)
+    {
+        double maxVal = 0;
+        double minVal = MAXVALUE;
+        for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+        {
+            if (thread_data_array[tid].mms[header[i]][1] < minVal)
+                minVal = thread_data_array[tid].mms[header[i]][1];
+
+            if (thread_data_array[tid].mms[header[i]][0] > maxVal)
+                maxVal = thread_data_array[tid].mms[header[i]][0];
+        }
+        minmaxfinal[header[i]] = {maxVal, minVal};
+    }
+
+    // initializing final minmaxmatrix
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        thread_data_array[tid].mms = minmaxfinal;
+    }
+
+    // create threads
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        return_code2 = pthread_create(&threads2[tid], NULL, calculator, (void *)&thread_data_array[tid]);
+
+        if (return_code2)
+        {
+            printf("ERROR; return code from pthread_create() is %d\n", return_code2);
+            exit(-1);
+        }
+    }
+
+    // wait for threads to done their jobs[get final res]
+    for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
+    {
+        return_code2 = pthread_join(threads2[tid], NULL);
+        if (return_code2)
+        {
+            printf("ERROR; return code from pthread_join() is %d\n", return_code2);
+            exit(-1);
+        }
+    }
 
     // get result value from each thread and calculate final result
     for (long tid = 0; tid < NUMBER_OF_THREADS; tid++)
