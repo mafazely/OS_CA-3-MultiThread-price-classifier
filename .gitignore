@@ -3,3 +3,4 @@ datasets/train_*
 parallel/main
 parallel/‫‪*.out‬‬
 serial/‫‪*.out‬‬
+.vscode
