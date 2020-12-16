@@ -285,6 +285,7 @@ int main(int argc, char const *argv[])
 
     double answer = totalcorrect / totalentries;
 
+    cout << "Accuracy: ";
     cout << fixed << setprecision(2) << answer * 100 << "%" << endl;
 
     pthread_exit(NULL);

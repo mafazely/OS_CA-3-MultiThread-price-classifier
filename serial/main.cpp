@@ -155,6 +155,7 @@ int main(int argc, char const *argv[])
     double numofcorrect = count(rowCorrectness.begin(), rowCorrectness.end(), true);
     double answer = numofcorrect / rowCorrectness.size();
 
+    cout << "Accuracy: ";
     cout << fixed << setprecision(2) << answer*100 << "%" << endl;
 
     return 0;
